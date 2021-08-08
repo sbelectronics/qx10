@@ -7404,11 +7404,11 @@
 2de3: 0a           ld   a,(bc)
 2de4: 0a           ld   a,(bc)
 2de5: 24           inc  h
-2de6: 00           nop
+2de6: 00           nop                 ; Sector number
 2de7: 00           nop
 2de8: 00           nop
 2de9: 00           nop
-2dea: 00           nop
+2dea: 00           nop                 ; Cylinder number, 10 bits
 2deb: 00           nop
 2dec: 00           nop
 2ded: 00           nop
