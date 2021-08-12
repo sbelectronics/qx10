@@ -1,3 +1,13 @@
+; diskpres.asm
+; Scott Baker, https://www.smbaker.com/
+;
+; Disk presence detector. The code from the QX-10 BIOS that checks
+; to see if a hard drive controller is installed. It does this by
+; writing to the CYL_LO register, and then reading back the SDH register
+; to see if the SDH register still has the correct value.
+;
+; Then we check the disk busy and ready bits.
+
 HDD_DATA    equ      80h
 HDD_ERROR   equ      81h
 HDD_SEC_CNT equ      82h

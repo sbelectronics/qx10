@@ -17,13 +17,10 @@
        ld    a,c
        and   $03
        out   ($85), a
-       xor   a            ; do not seek
-       nop
-       nop
-       nop
-       nop
-       nop
-       nop
+       ld    A, $01
+       out   ($82), A     ; Set sector count to 1
+       ld    A, $FF       ; A<-$FF, RRA is what the busy_wait func does before return
+       rra
        nop
        nop
        ret                ; return at address 3171

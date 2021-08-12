@@ -17,12 +17,9 @@
        ld    a,c
        and   $03
        out   ($85), a
-       xor   a            ; do not seek
-       nop
-       nop
-       nop
-       nop
-       nop
+       ld    a, $01       ; Sector count to 1
+       out   ($82), a
+       ld    a, $50       ; Return from seek would have been RDY+SKC. May not matter.
        nop
        nop
        nop
