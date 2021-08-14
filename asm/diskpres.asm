@@ -28,6 +28,33 @@ START:
         LD    DE, BANNER
 		CALL  PRINTMSG
 
+NEW:
+       ; New code, the same as what I patched into the BIOS.
+       ld     a,$A0
+       out    ($86),a        ; Set SDH to Master, Head0
+       ld     b,a            ; b = $A0
+
+       ld     a, $01       
+       out    ($81), a      ; 8-bit mode
+
+       in     a,($86)        ; Read back the SDH register
+       cp     b              ; Did it change?
+	   jp     nz, BADREG
+
+       ld     A, $EF        ; Set feature command for 8-bit mode
+       out    ($87), a      ; execute
+
+BUSWT:
+       in     a,($87)        ; Read Status
+       bit    7, A
+       jr     nz,BUSWT       ; Busy?
+       bit    6, A
+	   jp     z, NOTREADY
+
+	   JP     DONE
+
+OLD:
+        ; Old code, based on what was originally in the BIOS.
         XOR   A
 		OUT   (HDD_SEC_CNT), A
 		OUT   (HDD_SEC), A

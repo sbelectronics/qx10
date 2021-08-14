@@ -7160,7 +7160,7 @@
 2c59: cd 00 34     call $3400
 2c5c: 3e 0a        ld   a,$0A
 2c5e: c3 00 34     jp   $3400
-2c61: cd 84 2c     call $2C84          ; SUBROUTINE - format and write track; CALL format_track
+2c61: cd 84 2c     call $2C84          ; SUBROUTINE - format and write track; CALL format_track   ; FIXME - disable FORMAT
 2c64: cd a7 2c     call $2CA7          ; CALL write_track
 2c67: 3e 30        ld   a,$30
 2c69: d3 86        out  ($86),a        ; Select disk 3 ?
@@ -7193,7 +7193,7 @@
 2ca4: c3 00 00     jp   $0000          ; Warm boot
 2ca7: af           xor  a              ; SUBROUTINE - write track
 2ca8: 32 e6 2d     ld   ($2DE6),a      ; Start at sector 0
-2cab: 06 10        ld   b,$10          ; Write 10 sectors
+2cab: 06 10        ld   b,$10          ; Write 16 sectors
 2cad: c5           push bc
 2cae: cd b5 2c     call $2CB5          ; Call write_Sector
 2cb1: c1           pop  bc
@@ -7202,7 +7202,7 @@
 2cb5: cd ea 2c     call $2CEA          ; CALL Seek
 2cb8: 3a e6 2d     ld   a,($2DE6)      ; Sector number from [$2DE6]
 2cbb: d3 83        out  ($83),a        ; Set sector number  ; FIXME - sector number
-2cbd: 3c           inc  a              ; Incremenet
+2cbd: 3c           inc  a              ; Increment
 2cbe: 32 e6 2d     ld   ($2DE6),a      ; Store it back
 2cc1: 3e 30        ld   a,$30          
 2cc3: d3 87        out  ($87),a        ; write sector
@@ -7989,7 +7989,7 @@
 3030: ff           rst  $38
 3031: ff           rst  $38
 3032: 4e           ld   c,(hl)
-3033: 01 c3 0f     ld   bc,$0FC3
+3033: 01 c3 0f     ld   bc,$0FC3       ; This is 0x8000 in memory
 3036: 80           add  a,b
 3037: c3 42 80     jp   $8042
 303a: c3 4d 80     jp   $804D
@@ -8109,7 +8109,7 @@
 3115: 78           ld   a,b
 3116: e6 01        and  $01
 3118: c9           ret
-3119: 3e a0        ld   a,$A0          
+3119: 3e a0        ld   a,$A0          ; SUBROUTINE - check_ready and seek
 311b: d3 86        out  ($86),a        ; Set SDH to Master, Head0
 311d: 47           ld   b,a            ; b = A0
 311e: 2f           cpl                 ; Invert a, a is now 5F

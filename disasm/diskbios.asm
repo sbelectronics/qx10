@@ -23604,17 +23604,17 @@
 909a: dd e5        push ix
 909c: d1           pop  de
 909d: e9           jp   (hl)
-909e: cd 01 91     call $9101
-90a1: 21 59 91     ld   hl,$9159
+909e: cd 01 91     call $9101          ; SUBROUTINE print_error  -- called from retry
+90a1: 21 59 91     ld   hl,$9159       ; "Not Ready"
 90a4: fe 05        cp   $05
 90a6: 28 0a        jr   z,$90B2
-90a8: 21 42 91     ld   hl,$9142
+90a8: 21 42 91     ld   hl,$9142       ; "Seek Error"
 90ab: fe 04        cp   $04
 90ad: 28 03        jr   z,$90B2
-90af: 21 4d 91     ld   hl,$914D
-90b2: cd b1 14     call $14B1
-90b5: 21 8a 91     ld   hl,$918A
-90b8: cd 23 91     call $9123
+90af: 21 4d 91     ld   hl,$914D       ; "RD/WR Error"
+90b2: cd b1 14     call $14B1          ; print error messages?
+90b5: 21 8a 91     ld   hl,$918A       ; "(R)etry/(A)bort/(C)ontinue"
+90b8: cd 23 91     call $9123          ; Get keypress?
 90bb: fe 41        cp   $41
 90bd: c0           ret  nz
 90be: af           xor  a
@@ -24896,7 +24896,7 @@
 9a5a: af           xor  a
 9a5b: 32 db 9a     ld   ($9ADB),a
 9a5e: c9           ret
-9a5f: 3e a0        ld   a,$A0          ; entry - seek
+9a5f: 3e a0        ld   a,$A0          ; SUBROUTINE - check_ready and seek
 9a61: d3 86        out  ($86),a        ; Set SDH to Master, Head0
 9a63: 47           ld   b,a            ; b = A0
 9a64: 2f           cpl                 ; Invert a, a is now 5F
@@ -24954,10 +24954,10 @@
 9ac1: c9           ret
 9ac2: 3e 05        ld   a,$05          ; probable retry point
 9ac4: 32 cd 9a     ld   ($9ACD),a
-9ac7: cd 9e 90     call $909E
+9ac7: cd 9e 90     call $909E          ; print error and get (R)etry choice
 9aca: 18 93        jr   $9A5F          ; JMP Seek
 9acc: 00           nop
-9acd: 00           nop
+9acd: 00           nop                 ; set to 0x05 during retry
 9ace: 00           nop
 9acf: 00           nop                 ; logical drive in bit0, physical drive in bit1
 9ad0: 00           nop                 ; 16 bits, head in lower 2 bits, followed by 10 bit cyl
