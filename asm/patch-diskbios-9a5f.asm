@@ -21,11 +21,6 @@ BUSWT:
        bit  6, A
        jp   z, $9AC2       ; Not ready? Retry          
 
-;       in   a,($87)        ; XXX Read Status
-;       and  $C0            ; XXX Mask Busy and ready bits
-;       cp   $40            ; XXX Is drive ready and not busy?
-;       jp   nz,$9AC2       ; XXX No - Retry
-
        ld   hl,($9AD0)
        ld   de,($9ADF)
        add  hl,de
