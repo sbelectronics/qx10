@@ -17,9 +17,5 @@ BUSWT:
        in   a,($87)        ; Check status
        bit  7, A
        jr   nz,BUSWT        ; Not ready?
-       ;ld   b,a
-       ;ld   a,$30          ; Select drive 3?
-       ;out  ($86),a
-       ;ld   a,b
        and  $01
        ret z                ; Ret at 9a33

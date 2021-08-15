@@ -1,4 +1,5 @@
 ZASM=../../rc2014/z80-asm/zasm-4.0/Linux/zasm
+IDE_IMG=qx10ide.img
 
 all: programs patches disk
 
@@ -123,7 +124,10 @@ disk:
 	cpmcp -f epsqx10 epsnqx10-mangled.img odyssey.txt 0:ODYSSEY.TXT
 	dd if=epsnqx10.img of=build.img bs=1 count=16384
 	dd if=epsnqx10-mangled.img of=build.img bs=1 skip=20480 conv=notrunc oflag=append
-	cp build.img ../flashflop/DSKA0031-DEVEL.img
+	mv build.img $(IDE_IMG)
+
+copyout:
+	cp $(IDE_IMG) ../flashflop/DSKA0031-DEVEL.img
 
 odyssey.txt:
 	fold -w 40 -s odyssey.orig > odyssey.fold
