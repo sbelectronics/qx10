@@ -1,0 +1,43 @@
+name diag;
+device g16v8as;
+partno x;
+date 1/1/1980;
+designer smbaker;
+company sbsoftware;
+revision 1;
+assembly x;
+location x;
+
+PIN 1 = CLK;
+PIN 2 = A0;
+PIN 3 = A1; 
+PIN 4 = A2;
+PIN 5 = A3;
+PIN 6 = A4;
+PIN 7 = A5;
+PIN 8 = A6;
+PIN 9 = A7;
+PIN 10 = GND;
+PIN 11 = !BSAK;
+PIN 12 = O4;
+PIN 13 = O3;
+PIN 14 = O2;
+PIN 15 = O1;
+PIN 16 = UNUSED1;
+PIN 17 = UNUSED2;
+PIN 18 = !IWR;
+PIN 19 = !IRD;
+PIN 20 = VCC;
+
+FIELD IOADR = [A7..A0];
+
+MOTOR = IOADR: 0x30;
+FDSTATUS = IOADR: 0x34;
+FDDATA = IOADR: 0x35;
+
+INTEREST = MOTOR # FDSTATUS # FDDATA;
+
+O1 = IWR & INTEREST & (!BSAK);
+O2 = IRD & INTEREST & (!BSAK);
+O3 = MOTOR;
+O4 = FDSTATUS # FDDATA;

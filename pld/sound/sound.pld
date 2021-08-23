@@ -1,0 +1,50 @@
+name sound;
+device g16v8as;
+partno x;
+date 1/1/1980;
+designer smbaker;
+company sbsoftware;
+revision 1;
+assembly x;
+location x;
+
+PIN 1 = !IRD;
+PIN 2 = A0;
+PIN 3 = A1; 
+PIN 4 = A2;
+PIN 5 = A3;
+PIN 6 = A4;
+PIN 7 = A5;
+PIN 8 = A6;
+PIN 9 = A7;
+PIN 10 = GND;
+PIN 11 = !IWR;
+PIN 12 = SW0;
+PIN 13 = SW1;
+PIN 14 = !CS;
+PIN 15 = BC1;
+PIN 16 = BDIR;
+PIN 17 = !A15;
+PIN 18 = !A14;
+PIN 19 = !BSAK;
+PIN 20 = VCC;
+
+FIELD IOADR = [A7..A0];
+
+FIELD SW = [SW1..SW0];
+
+MSX_IO_WRT_REG =  (SW: 00) & (IOADR : 0A0);
+MSX_IO_WRT_VAL =  (SW: 00) & (IOADR : 0A1);
+MSX_IO_RD_VAL  =  (SW: 00) & (IOADR : 0A2);
+
+ALT_IO_WRT_REG = (SW: 01) & (IOADR : 050);
+ALT_IO_WRT_VAL = (SW: 01) & (IOADR : 051);
+ALT_IO_RD_VAL  = (SW: 01) & (IOADR : 052);
+
+IO_WRT_REG = !BSAK & IWR & (MSX_IO_WRT_REG # ALT_IO_WRT_REG);
+IO_WRT_VAL = !BSAK & IWR & (MSX_IO_WRT_VAL # ALT_IO_WRT_VAL);
+IO_RD_VAL = !BSAK & IRD & (MSX_IO_WRT_VAL # ALT_IO_WRT_VAL);
+
+BDIR = IO_WRT_REG # IO_WRT_VAL;
+BC1 = IO_WRT_REG # IO_RD_VAL;
+CS = IO_WRT_REG # IO_WRT_VAL # IO_RD_VAL;
