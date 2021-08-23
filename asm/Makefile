@@ -1,11 +1,14 @@
 ZASM=../../rc2014/z80-asm/zasm-4.0/Linux/zasm
 IDE_IMG=qx10ide.img
 
-all: programs patches disk
+all: programs patches disk copyout
 
-programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com
+programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com cqgtest.com
 
 patches: patch-hdpart patch-cpm2
+
+cqgtest.com: cqgtest.asm
+	$(ZASM) -u -b cqgtest.asm -o cqgtest.com
 
 diskinfo.com: diskinfo.asm
 	$(ZASM) -u -b diskinfo.asm -o diskinfo.com
@@ -105,6 +108,7 @@ unidasm-diff-cpm2:
 .PHONY: disk
 disk:
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:CPM2.SYS || true
+	cpmrm -f epsqx10 epsnqx10-mangled.img 0:CQGTEST.COM || true	
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:CLRDIR.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:FMT0.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:HDPART.COM || true
@@ -115,6 +119,7 @@ disk:
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:ODYSSEY.TXT || true
 	cpmcp -f epsqx10 epsnqx10-mangled.img bank01.com 0:BANK01.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img ../disasm/CLRDIR.COM 0:CLRDIR.COM
+	cpmcp -f epsqx10 epsnqx10-mangled.img cqgtest.com 0:CQGTEST.COM	
 	cpmcp -f epsqx10 epsnqx10-mangled.img diskinfo.com 0:DISKINFO.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img diskpres.com 0:DISKPRES.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img fmt0.com 0:FMT0.COM
