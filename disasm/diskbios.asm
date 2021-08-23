@@ -76,40 +76,136 @@
 00cd: cd 5e 90     call $905E
 00d0: cd 20 f3     call $F320
 00d3: c3 96 f4     jp   $F496
-00d6: 01 03 01     ld   bc,$0103
+00d6: 01 03 01     ld   bc,$0103    ; Copy from bank1 to ramdisk3
 00d9: cd 9b f3     call $F39B
 00dc: 21 00 d8     ld   hl,$D800
 00df: 11 00 da     ld   de,$DA00
 00e2: 01 00 08     ld   bc,$0800
 00e5: cd a5 f3     call $F3A5
-00e8: 01 01 01     ld   bc,$0101
+00e8: 01 01 01     ld   bc,$0101    ; Copy from bank1 to bank1
 00eb: cd 9b f3     call $F39B
 00ee: 01 06 00     ld   bc,$0006
 00f1: 11 00 e2     ld   de,$E200
 00f4: 21 28 dd     ld   hl,$DD28
 00f7: cd a5 f3     call $F3A5
 00fa: c9           ret
-00fb: 08           ex   af,af'
-00fc: 3a 17 02     ld   a,($0217)
+00fb: 08           ex   af,af'     ; possible entry from BIOS
+00fc: 3a 17 02     ld   a,($0217)  ; possible size of func tbl in $0217
 00ff: b9           cp   c
-0100: da 15 01     jp   c,$0115
+0100: da 15 01     jp   c,$0115    ; out of range - return
 0103: 79           ld   a,c
-0104: 81           add  a,c
+0104: 81           add  a,c        ; A = C << 1
 0105: d9           exx
-0106: 5f           ld   e,a
-0107: 16 00        ld   d,$00
-0109: 21 17 01     ld   hl,$0117
+0106: 5f           ld   e,a        ; E = param-A
+0107: 16 00        ld   d,$00      ; 
+0109: 21 17 01     ld   hl,$0117   ; 0117 = offset of func table
 010c: 19           add  hl,de
 010d: 7e           ld   a,(hl)
 010e: 23           inc  hl
 010f: 66           ld   h,(hl)
-0110: 6f           ld   l,a
-0111: e5           push hl
+0110: 6f           ld   l,a        ; HL = little endian load of (hl)
+0111: e5           push hl         ; push HL onto stack
 0112: d9           exx
 0113: 08           ex   af,af'
-0114: c9           ret
+0114: c9           ret             ; ret into HL
 0115: af           xor  a
 0116: c9           ret
+
+; XBIOS call table
+00 18 02
+01 f2 94 
+02 ba 02 
+03 d7 02 
+04 db 02 
+05 f0 02
+06 03 03
+07 b8 03
+08 f2 03
+09 0d 04
+10 26 04
+11 2f 04
+12 59 04
+13 5d 04
+14 72 04
+15 79 04
+16 b5 04
+17 b9 04
+18 c0 04
+19 d0 04
+20 4d 05
+21 60 05
+22 74 05
+23 8c 05
+24 a4 05
+25 a9 05
+26 c2 05
+27 25 06
+28 29 06
+29 2d 06
+30 32 06
+31 52 06
+32 65 06
+33 7c 06
+34 8f 06
+35 a4 06
+36 bc 06
+37 d5 06
+38 e8 06
+39 19 07
+40 1f 07
+41 30 07
+42 57 07
+43 5b 07
+44 62 07
+45 88 07
+46 8d 07   Request memory bank
+47 ca 07   Release memory bank
+48 0f 08   Move Block to another Bank
+49 f0 f4
+50 f0 f4
+51 66 08
+52 92 08 
+53 fd 09 
+54 4c 49
+55 00 52 
+56 11 69 
+57 1f 0b
+58 23 0b
+59 fd 09 
+60 99 08
+61 e0 08
+62 ea 08
+63 f5 08
+64 16 09
+65 3e 09
+66 3e 09
+67 3e 09
+68 fd 09
+69 fd 09 
+70 63 32
+71 00 44
+72 a7 09
+73 ab 09
+74 af 09
+75 fd 09 
+76 fd 09
+77 fd 09 
+78 fd 09
+79 fd 09
+80 46 92 
+81 54 92
+82 62 92
+83 fd 09
+84 fd 09 
+85 fd 09
+86 fd 09
+87 fd 09
+88 fd 09
+89 fd 09
+90 fd 09
+91 c4 09
+92 e7 09 
+
 0117: 18 02        jr   $011B
 0119: f2 94 ba     jp   p,$BA94
 011c: 02           ld   (bc),a
@@ -279,71 +375,71 @@
 0217: 7f           ld   a,a
 0218: 32 a6 02     ld   ($02A6),a
 021b: 01 06 00     ld   bc,$0006
-021e: cd a7 02     call $02A7
-0221: 3a 81 0a     ld   a,($0A81)
-0224: fe 05        cp   $05
-0226: 30 7d        jr   nc,$02A5
+021e: cd a7 02     call $02A7         ; copy descriptor
+0221: 3a 81 0a     ld   a,($0A81)     ; get function number
+0224: fe 05        cp   $05           
+0226: 30 7d        jr   nc,$02A5      ; function >= 5, return 
 0228: fe 03        cp   $03
-022a: 20 07        jr   nz,$0233
-022c: 3e fe        ld   a,$FE
-022e: 32 7f 0a     ld   ($0A7F),a
+022a: 20 07        jr   nz,$0233      ; Is function 3, read system ?
+022c: 3e fe        ld   a,$FE         ; yes...
+022e: 32 7f 0a     ld   ($0A7F),a     ; function==3, store FE in 0A7F
 0231: 18 30        jr   $0263
 0233: fe 01        cp   $01
-0235: 20 07        jr   nz,$023E
+0235: 20 07        jr   nz,$023E      ; function 1, read data ?
 0237: 3e ff        ld   a,$FF
-0239: 32 7f 0a     ld   ($0A7F),a
+0239: 32 7f 0a     ld   ($0A7F),a     ; function==1, store FF in 0A7F
 023c: 18 25        jr   $0263
 023e: fe 00        cp   $00
-0240: 28 21        jr   z,$0263
-0242: 3a 65 f0     ld   a,($F065)
+0240: 28 21        jr   z,$0263       ; Is function 0, home ?
+0242: 3a 65 f0     ld   a,($F065)     ; no, must be function 2 (write data) or 4 (write system)
 0245: 4f           ld   c,a
 0246: 06 00        ld   b,$00
-0248: cd 9b f3     call $F39B
+0248: cd 9b f3     call $F39B         ; set source bank=0, dest bank=(F065)
 024b: 11 70 fd     ld   de,$FD70
-024e: 2a 84 0a     ld   hl,($0A84)
+024e: 2a 84 0a     ld   hl,($0A84)    ; dest addr
 0251: 3a 81 0a     ld   a,($0A81)
 0254: fe 04        cp   $04
-0256: 20 05        jr   nz,$025D
-0258: 01 00 01     ld   bc,$0100
+0256: 20 05        jr   nz,$025D      ; function!=4, goto 25d
+0258: 01 00 01     ld   bc,$0100      ; copy 256 bytes
 025b: 18 03        jr   $0260
-025d: 01 00 02     ld   bc,$0200
-0260: cd a5 f3     call $F3A5
-0263: ed 4b 80 0a  ld   bc,($0A80)
-0267: ed 5b 82 0a  ld   de,($0A82)
-026b: 21 70 fd     ld   hl,$FD70
+025d: 01 00 02     ld   bc,$0200      ; copy 512 bytes
+0260: cd a5 f3     call $F3A5         ; banked memory copy
+0263: ed 4b 80 0a  ld   bc,($0A80)    ; B = unit, C = function
+0267: ed 5b 82 0a  ld   de,($0A82)    ; D = sector, E=Track
+026b: 21 70 fd     ld   hl,$FD70      ; dest = FD70
 026e: 3a a6 02     ld   a,($02A6)
-0271: cd f9 94     call $94F9
+0271: cd f9 94     call $94F9         ; do the disk op?
 0274: b7           or   a
-0275: c2 a5 02     jp   nz,$02A5
+0275: c2 a5 02     jp   nz,$02A5      ; return if error
 0278: 3a 7f 0a     ld   a,($0A7F)
 027b: b7           or   a
-027c: ca a5 02     jp   z,$02A5
+027c: ca a5 02     jp   z,$02A5       ; If we're a write, then we're done
 027f: 3a 65 f0     ld   a,($F065)
 0282: 47           ld   b,a
 0283: 0e 00        ld   c,$00
-0285: cd 9b f3     call $F39B
-0288: ed 5b 84 0a  ld   de,($0A84)
-028c: 21 70 fd     ld   hl,$FD70
+0285: cd 9b f3     call $F39B         ; src bank = (F065), dest bank = 0
+0288: ed 5b 84 0a  ld   de,($0A84)    ; src addr
+028c: 21 70 fd     ld   hl,$FD70      ; write to FD70
 028f: 3a 7f 0a     ld   a,($0A7F)
 0292: fe ff        cp   $FF
 0294: 28 05        jr   z,$029B
-0296: 01 00 01     ld   bc,$0100
+0296: 01 00 01     ld   bc,$0100       ; copy 256 bytes
 0299: 18 03        jr   $029E
-029b: 01 00 02     ld   bc,$0200
-029e: cd a5 f3     call $F3A5
+029b: 01 00 02     ld   bc,$0200       ; copy 512 bytes
+029e: cd a5 f3     call $F3A5          ; banked memory copy
 02a1: af           xor  a
 02a2: 32 7f 0a     ld   ($0A7F),a
 02a5: c9           ret
 02a6: 00           nop
-02a7: c5           push bc
-02a8: 3a 65 f0     ld   a,($F065)
+02a7: c5           push bc          ; SUBROUTINE - current bank0:0A80 to current:de
+02a8: 3a 65 f0     ld   a,($F065)   ; current bank?
 02ab: 4f           ld   c,a
 02ac: 06 00        ld   b,$00
 02ae: cd 9b f3     call $F39B
 02b1: 21 80 0a     ld   hl,$0A80
 02b4: eb           ex   de,hl
 02b5: c1           pop  bc
-02b6: cd a5 f3     call $F3A5
+02b6: cd a5 f3     call $F3A5       ; copies the banked-move descriptor ito 0A80
 02b9: c9           ret
 02ba: fe 03        cp   $03
 02bc: 38 15        jr   c,$02D3
@@ -364,7 +460,7 @@
 02d6: 00           nop
 02d7: 11 1f f6     ld   de,$F61F
 02da: c9           ret
-02db: d5           push de
+02db: d5           push de            ; SUBROUTINE - move 27 bytes from bank0:F695 to current:de
 02dc: 3a 65 f0     ld   a,($F065)
 02df: 4f           ld   c,a
 02e0: 06 00        ld   b,$00
@@ -374,7 +470,7 @@
 02e9: 01 1b 00     ld   bc,$001B
 02ec: cd a5 f3     call $F3A5
 02ef: c9           ret
-02f0: 3a 65 f0     ld   a,($F065)
+02f0: 3a 65 f0     ld   a,($F065)    ; SUBROUTINE - move 128 bytes from bank0:de to current:270A
 02f3: 47           ld   b,a
 02f4: 0e 00        ld   c,$00
 02f6: cd 9b f3     call $F39B
@@ -382,7 +478,7 @@
 02fc: 01 80 00     ld   bc,$0080
 02ff: cd a5 f3     call $F3A5
 0302: c9           ret
-0303: 3a 3c 27     ld   a,($273C)
+0303: 3a 3c 27     ld   a,($273C)    ; SUBROUTINE - move 103 bytes from bank0:2723 to current:de+19
 0306: 32 1d 0b     ld   ($0B1D),a
 0309: 3a 35 27     ld   a,($2735)
 030c: 32 1c 0b     ld   ($0B1C),a
@@ -487,7 +583,7 @@
 03ed: 32 3d 27     ld   ($273D),a
 03f0: af           xor  a
 03f1: c9           ret
-03f2: d5           push de
+03f2: d5           push de          ; Move 7 bytes from current:de to bank0:F7DC
 03f3: 21 dc f7     ld   hl,$F7DC
 03f6: cd f9 11     call $11F9
 03f9: 3a 65 f0     ld   a,($F065)
@@ -499,7 +595,7 @@
 0406: 01 07 00     ld   bc,$0007
 0409: cd a5 f3     call $F3A5
 040c: c9           ret
-040d: 3a 65 f0     ld   a,($F065)
+040d: 3a 65 f0     ld   a,($F065)    ; Move 7 bytes from bank0:F7DC to current:DE
 0410: 4f           ld   c,a
 0411: 06 00        ld   b,$00
 0413: cd 9b f3     call $F39B
@@ -514,7 +610,7 @@
 042a: 26 32        ld   h,$32
 042c: 2e 37        ld   l,$37
 042e: c9           ret
-042f: 3a 65 f0     ld   a,($F065)
+042f: 3a 65 f0     ld   a,($F065)    ; Move 80 bytes from bank0:F7DC to current:HL, then do some stuff
 0432: 4f           ld   c,a
 0433: 06 00        ld   b,$00
 0435: cd 9b f3     call $F39B
@@ -534,7 +630,7 @@
 0458: c9           ret
 0459: 3a 14 98     ld   a,($9814)
 045c: c9           ret
-045d: 3a 65 f0     ld   a,($F065)
+045d: 3a 65 f0     ld   a,($F065)     ; Move ($0A79) bytes from bank0:D200 to current:DE
 0460: 4f           ld   c,a
 0461: 06 00        ld   b,$00
 0463: cd 9b f3     call $F39B
@@ -645,7 +741,7 @@
 0546: 32 9a 4f     ld   ($4F9A),a
 0549: cd 59 40     call $4059
 054c: c9           ret
-054d: 3a 65 f0     ld   a,($F065)
+054d: 3a 65 f0     ld   a,($F065)      ; Move 768 bytes from current:DE to bank0:BC00
 0550: 47           ld   b,a
 0551: 0e 00        ld   c,$00
 0553: cd 9b f3     call $F39B
@@ -653,7 +749,7 @@
 0559: 01 00 03     ld   bc,$0300
 055c: cd a5 f3     call $F3A5
 055f: c9           ret
-0560: 3a 65 f0     ld   a,($F065)
+0560: 3a 65 f0     ld   a,($F065)      ; Move 768 bytes from bank0:BC00 to current:DE
 0563: 4f           ld   c,a
 0564: 06 00        ld   b,$00
 0566: cd 9b f3     call $F39B
@@ -662,7 +758,7 @@
 056d: 01 00 03     ld   bc,$0300
 0570: cd a5 f3     call $F3A5
 0573: c9           ret
-0574: 01 00 03     ld   bc,$0300
+0574: 01 00 03     ld   bc,$0300      ; copy from ramdisk3 to bank0
 0577: cd 9b f3     call $F39B
 057a: 21 00 bc     ld   hl,$BC00
 057d: 11 00 d5     ld   de,$D500
@@ -674,7 +770,7 @@
 058c: 3a 67 0a     ld   a,($0A67)
 058f: b7           or   a
 0590: c8           ret  z
-0591: 01 03 00     ld   bc,$0003
+0591: 01 03 00     ld   bc,$0003       ; copy from bank0 to ramdisk3
 0594: cd 9b f3     call $F39B
 0597: 21 00 d5     ld   hl,$D500
 059a: 11 00 bc     ld   de,$BC00
@@ -792,7 +888,7 @@
 0675: 2a 65 0a     ld   hl,($0A65)
 0678: 22 34 27     ld   ($2734),hl
 067b: c9           ret
-067c: 3a 65 f0     ld   a,($F065)
+067c: 3a 65 f0     ld   a,($F065)     ; Move 1K from current:DE to bank0:($0A51)
 067f: 47           ld   b,a
 0680: 0e 00        ld   c,$00
 0682: cd 9b f3     call $F39B
@@ -800,7 +896,7 @@
 0688: 01 00 04     ld   bc,$0400
 068b: cd a5 f3     call $F3A5
 068e: c9           ret
-068f: 3a 65 f0     ld   a,($F065)
+068f: 3a 65 f0     ld   a,($F065)     ; Move 1K from bank0:($0A51) to current:DE
 0692: 4f           ld   c,a
 0693: 06 00        ld   b,$00
 0695: cd 9b f3     call $F39B
@@ -809,7 +905,7 @@
 069d: 01 00 04     ld   bc,$0400
 06a0: cd a5 f3     call $F3A5
 06a3: c9           ret
-06a4: 01 00 03     ld   bc,$0300
+06a4: 01 00 03     ld   bc,$0300        ; Move 1K from ramdisk3:D100 to bank0:($0A51)
 06a7: cd 9b f3     call $F39B
 06aa: 2a 51 0a     ld   hl,($0A51)
 06ad: 11 00 d1     ld   de,$D100
@@ -821,14 +917,14 @@
 06bc: 3a 68 0a     ld   a,($0A68)
 06bf: b7           or   a
 06c0: c8           ret  z
-06c1: 01 03 00     ld   bc,$0003
+06c1: 01 03 00     ld   bc,$0003        ; Copy 1K from bank0:($0A51) to ramdisk3:D100
 06c4: cd 9b f3     call $F39B
 06c7: 21 00 d1     ld   hl,$D100
 06ca: ed 5b 51 0a  ld   de,($0A51)
 06ce: 01 00 04     ld   bc,$0400
 06d1: cd a5 f3     call $F3A5
 06d4: c9           ret
-06d5: cd fc 06     call $06FC
+06d5: cd fc 06     call $06FC           ; Copy 25 bytes from current:DE to bank0:HL
 06d8: 3a 65 f0     ld   a,($F065)
 06db: 47           ld   b,a
 06dc: 0e 00        ld   c,$00
@@ -836,7 +932,7 @@
 06e1: 01 19 00     ld   bc,$0019
 06e4: cd a5 f3     call $F3A5
 06e7: c9           ret
-06e8: cd fc 06     call $06FC
+06e8: cd fc 06     call $06FC           ; Copy 25 bytes from bank0:HL to current:DE
 06eb: eb           ex   de,hl
 06ec: 3a 65 f0     ld   a,($F065)
 06ef: 4f           ld   c,a
@@ -926,46 +1022,46 @@
 0788: af           xor  a
 0789: 32 61 07     ld   ($0761),a
 078c: c9           ret
-078d: 32 c9 07     ld   ($07C9),a
-0790: fe 01        cp   $01
-0792: c8           ret  z
-0793: fe 02        cp   $02
-0795: 38 2f        jr   c,$07C6
-0797: fe 04        cp   $04
-0799: 30 2b        jr   nc,$07C6
-079b: 3a 35 27     ld   a,($2735)
+078d: 32 c9 07     ld   ($07C9),a        ; SUBROUTINE - request memory bank
+0790: fe 01        cp   $01              ; cannot request bank 1
+0792: c8           ret  z                ; return error 1
+0793: fe 02        cp   $02              ; cannot request bank < 2
+0795: 38 2f        jr   c,$07C6          ; return error 1
+0797: fe 04        cp   $04              ; cannot request bank > 4
+0799: 30 2b        jr   nc,$07C6         ; return error 1
+079b: 3a 35 27     ld   a,($2735)        ; ram disk enabled?
 079e: b7           or   a
-079f: ca b4 07     jp   z,$07B4
-07a2: 3a 65 9b     ld   a,($9B65)
+079f: ca b4 07     jp   z,$07B4          ; no, ram disk not enabled, can claim the bank
+07a2: 3a 65 9b     ld   a,($9B65)        ; ram disk in use?
 07a5: b7           or   a
-07a6: 28 03        jr   z,$07AB
-07a8: 3e 02        ld   a,$02
-07aa: c9           ret
+07a6: 28 03        jr   z,$07AB          ; ram disk is not in use
+07a8: 3e 02        ld   a,$02            
+07aa: c9           ret                   ; return error 2 - ram disk in use
 07ab: af           xor  a
-07ac: 32 35 27     ld   ($2735),a
+07ac: 32 35 27     ld   ($2735),a        ; disable the ram disk
 07af: 3e ff        ld   a,$FF
-07b1: 32 1e 0b     ld   ($0B1E),a
+07b1: 32 1e 0b     ld   ($0B1E),a        ; ??
 07b4: 3a c9 07     ld   a,($07C9)
 07b7: fe 02        cp   $02
 07b9: ca c1 07     jp   z,$07C1
-07bc: 32 b7 f4     ld   ($F4B7),a
+07bc: 32 b7 f4     ld   ($F4B7),a       ; bank 3 gets recorded in F4B7
 07bf: af           xor  a
-07c0: c9           ret
-07c1: 32 b6 f4     ld   ($F4B6),a
+07c0: c9           ret                  ; return success
+07c1: 32 b6 f4     ld   ($F4B6),a       ; bank 2 gets recorded in F4B6
 07c4: af           xor  a
-07c5: c9           ret
+07c5: c9           ret                  ; return success
 07c6: 3e 01        ld   a,$01
 07c8: c9           ret
 07c9: 00           nop
-07ca: fe 02        cp   $02
-07cc: ca d8 07     jp   z,$07D8
-07cf: fe 03        cp   $03
-07d1: c0           ret  nz
+07ca: fe 02        cp   $02             ; XBIOS - release memory bank
+07cc: ca d8 07     jp   z,$07D8         ; Is bank 2 ?
+07cf: fe 03        cp   $03             ; Is bank 3 ?
+07d1: c0           ret  nz              ; Nope!
 07d2: 3e ff        ld   a,$FF
-07d4: 32 b7 f4     ld   ($F4B7),a
+07d4: 32 b7 f4     ld   ($F4B7),a       ; Release bank 3 by writing FF to F4B7
 07d7: c9           ret
 07d8: 3e ff        ld   a,$FF
-07da: 32 b6 f4     ld   ($F4B6),a
+07da: 32 b6 f4     ld   ($F4B6),a       ; Release bank 2 by writing FF to F4B6
 07dd: c9           ret
 07de: 20 52        jr   nz,$0832
 07e0: 41           ld   b,c
@@ -1005,10 +1101,9 @@
 080a: 6e           ld   l,(hl)
 080b: 75           ld   (hl),l
 080c: 65           ld   h,l
-080d: 3a 00 01     ld   a,($0100)
-0810: 08           ex   af,af'
-0811: 00           nop
-0812: cd a7 02     call $02A7
+080d: 3a 00
+080f: 01 08 00     ld   b, 0008         ; SUBROUTINE - copy memory between banks
+0812: cd a7 02     call $02A7           ; copy descriptor
 0815: 2a 84 0a     ld   hl,($0A84)
 0818: ed 5b 86 0a  ld   de,($0A86)
 081c: 19           add  hl,de
@@ -1016,31 +1111,31 @@
 0820: b7           or   a
 0821: ed 52        sbc  hl,de
 0823: 30 27        jr   nc,$084C
-0825: 3a 80 0a     ld   a,($0A80)
-0828: b7           or   a
-0829: fa 4c 08     jp   m,$084C
-082c: fe 04        cp   $04
-082e: d2 4c 08     jp   nc,$084C
-0831: 3a 81 0a     ld   a,($0A81)
+0825: 3a 80 0a     ld   a,($0A80)       
+0828: b7           or   a               
+0829: fa 4c 08     jp   m,$084C         ; if high bit set then error
+082c: fe 04        cp   $04             
+082e: d2 4c 08     jp   nc,$084C        ; >=4 then error
+0831: 3a 81 0a     ld   a,($0A81)       ; dest bank?
 0834: a7           and  a
-0835: ca 4f 08     jp   z,$084F
+0835: ca 4f 08     jp   z,$084F         ; bank 0 is okay
 0838: fe 01        cp   $01
-083a: ca 4f 08     jp   z,$084F
+083a: ca 4f 08     jp   z,$084F         ; bank 1 is okay
 083d: 47           ld   b,a
-083e: 3a b6 f4     ld   a,($F4B6)
+083e: 3a b6 f4     ld   a,($F4B6)       ; bank at (F4B6) is okay
 0841: b8           cp   b
 0842: ca 4f 08     jp   z,$084F
-0845: 3a b7 f4     ld   a,($F4B7)
+0845: 3a b7 f4     ld   a,($F4B7)       ; bank at (F4B7) is okay
 0848: b8           cp   b
 0849: ca 4f 08     jp   z,$084F
-084c: 3e 01        ld   a,$01
+084c: 3e 01        ld   a,$01           ; return error
 084e: c9           ret
-084f: ed 4b 80 0a  ld   bc,($0A80)
-0853: cd 9b f3     call $F39B
+084f: ed 4b 80 0a  ld   bc,($0A80)      ; src bank = b, dest bank = c
+0853: cd 9b f3     call $F39B           ; set source and dest bank
 0856: 2a 82 0a     ld   hl,($0A82)
 0859: ed 5b 84 0a  ld   de,($0A84)
 085d: ed 4b 86 0a  ld   bc,($0A86)
-0861: cd a5 f3     call $F3A5
+0861: cd a5 f3     call $F3A5           ; do the memory copy
 0864: af           xor  a
 0865: c9           ret
 0866: 21 de 07     ld   hl,$07DE
@@ -1240,7 +1335,7 @@
 09aa: c9           ret
 09ab: cd d6 00     call $00D6
 09ae: c9           ret
-09af: c5           push bc
+09af: c5           push bc             ; Move B bytes from ramdisk3:D807 to current:HL
 09b0: 3a 65 f0     ld   a,($F065)
 09b3: 4f           ld   c,a
 09b4: 06 03        ld   b,$03
@@ -18243,7 +18338,7 @@
 6994: 22 9c 82     ld   ($829C),hl
 6997: 22 b5 82     ld   ($82B5),hl
 699a: c9           ret
-699b: 3a 65 f0     ld   a,($F065)
+699b: 3a 65 f0     ld   a,($F065)      ; Move 8 bytes from bank0:6987 to current:HL
 699e: 4f           ld   c,a
 699f: 06 00        ld   b,$00
 69a1: e5           push hl
@@ -18745,7 +18840,7 @@
 6d7e: 3a 82 6d     ld   a,($6D82)
 6d81: c9           ret
 6d82: 00           nop
-6d83: 3a 65 f0     ld   a,($F065)
+6d83: 3a 65 f0     ld   a,($F065)        ; Move 10 bytes from bank0:7010 to current:HL
 6d86: 4f           ld   c,a
 6d87: 06 00        ld   b,$00
 6d89: e5           push hl
@@ -19224,7 +19319,7 @@
 70e9: ff           rst  $38
 70ea: ff           rst  $38
 70eb: ff           rst  $38
-70ec: 32 74 83     ld   ($8374),a
+70ec: 32 74 83     ld   ($8374),a       ; Move 10 bytes from bank0:7815 to current:HL
 70ef: 3a 65 f0     ld   a,($F065)
 70f2: 4f           ld   c,a
 70f3: 06 00        ld   b,$00
@@ -20676,7 +20771,7 @@
 7cab: 00           nop
 7cac: 00           nop
 7cad: 00           nop
-7cae: ed 4b 14 7d  ld   bc,($7D14)
+7cae: ed 4b 14 7d  ld   bc,($7D14)      ; Move ?? bytes from bank0:D180 to current:($7d16)
 7cb2: af           xor  a
 7cb3: cb 21        sla  c
 7cb5: ce 00        adc  a,$00
@@ -20685,7 +20780,7 @@
 7cbb: ce 00        adc  a,$00
 7cbd: 47           ld   b,a
 7cbe: c5           push bc
-7cbf: 3a 65 f0     ld   a,($F065)
+7cbf: 3a 65 f0     ld   a,($F065) 
 7cc2: 4f           ld   c,a
 7cc3: 06 00        ld   b,$00
 7cc5: cd 9b f3     call $F39B
@@ -20820,7 +20915,7 @@
 7dcf: 00           nop
 7dd0: 00           nop
 7dd1: 00           nop
-7dd2: e5           push hl
+7dd2: e5           push hl               ; Move 12 bytes from bank0:7EDa to current:HL
 7dd3: 3a 65 f0     ld   a,($F065)
 7dd6: 4f           ld   c,a
 7dd7: 06 00        ld   b,$00
@@ -20873,7 +20968,7 @@
 7e42: b3           or   e
 7e43: c8           ret  z
 7e44: c3 2a 7e     jp   $7E2A
-7e47: 3a 65 f0     ld   a,($F065)
+7e47: 3a 65 f0     ld   a,($F065)       ; Move ($8360) bytes from bank0:B180 to current:($7EE4)
 7e4a: 4f           ld   c,a
 7e4b: 06 00        ld   b,$00
 7e4d: cd 9b f3     call $F39B
@@ -21042,7 +21137,7 @@
 7fb4: 3a 39 81     ld   a,($8139)
 7fb7: cd 66 69     call $6966
 7fba: c9           ret
-7fbb: 3a 65 f0     ld   a,($F065)
+7fbb: 3a 65 f0     ld   a,($F065)       ; Move ($8360) bytes from current:($7EE4) to bank0:D180
 7fbe: 0e 00        ld   c,$00
 7fc0: 47           ld   b,a
 7fc1: cd 9b f3     call $F39B
@@ -21067,7 +21162,7 @@
 7ff5: dd e5        push ix
 7ff7: fd e5        push iy
 7ff9: e1           pop  hl
-7ffa: 3a 65 f0     ld   a,($F065)
+7ffa: 3a 65 f0     ld   a,($F065)        ; Move ?? bytes from bank0:D180 to current:HL
 7ffd: 4f           ld   c,a
 7ffe: 06 00        ld   b,$00
 8000: e5           push hl
@@ -23100,7 +23195,7 @@
 8cba: c3 9a 8c     jp   $8C9A
 8cbd: c3 a7 12     jp   $12A7
 8cc0: c3 c3 8c     jp   $8CC3
-8cc3: d5           push de
+8cc3: d5           push de          ; move 1.25K bytes from ??:DE to bank0:HL
 8cc4: c5           push bc
 8cc5: cd db 8c     call $8CDB
 8cc8: c1           pop  bc
@@ -24129,7 +24224,7 @@
 946a: 20 05        jr   nz,$9471
 946c: 48           ld   c,b
 946d: 06 00        ld   b,$00
-946f: 18 02        jr   $9473
+946f: 18 02        jr   $9473      ; move bytes; I'm too tired to figure out where to where
 9471: 0e 00        ld   c,$00
 9473: cd 9b f3     call $F39B
 9476: 01 80 00     ld   bc,$0080
@@ -24201,7 +24296,7 @@
 94f5: b7           or   a
 94f6: c8           ret  z
 94f7: 18 8e        jr   $9487
-94f9: 32 3b 98     ld   ($983B),a
+94f9: 32 3b 98     ld   ($983B),a       ; SUBROUTINE - disk op?
 94fc: 3a 1e 98     ld   a,($981E)
 94ff: 32 19 98     ld   ($9819),a
 9502: af           xor  a
@@ -24789,7 +24884,7 @@
 9980: 06 00        ld   b,$00
 9982: 18 02        jr   $9986
 9984: 0e 00        ld   c,$00
-9986: cd 9b f3     call $F39B
+9986: cd 9b f3     call $F39B       ; move bytes, I'm too tired to figure out where to where
 9989: 01 80 00     ld   bc,$0080
 998c: cd a5 f3     call $F3A5
 998f: 3a de 9a     ld   a,($9ADE)
