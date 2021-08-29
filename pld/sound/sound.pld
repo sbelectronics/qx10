@@ -33,9 +33,9 @@ FIELD IOADR = [A7..A0];
 
 FIELD SW = [SW1..SW0];
 
-MSX_IO_WRT_REG =  (SW: 00) & (IOADR : 0A0);
-MSX_IO_WRT_VAL =  (SW: 00) & (IOADR : 0A1);
-MSX_IO_RD_VAL  =  (SW: 00) & (IOADR : 0A2);
+MSX_IO_WRT_REG =  (SW: 11) & (IOADR : 0A0);
+MSX_IO_WRT_VAL =  (SW: 11) & (IOADR : 0A1);
+MSX_IO_RD_VAL  =  (SW: 11) & (IOADR : 0A2);
 
 ALT_IO_WRT_REG = (SW: 01) & (IOADR : 050);
 ALT_IO_WRT_VAL = (SW: 01) & (IOADR : 051);
