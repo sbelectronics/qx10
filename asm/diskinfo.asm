@@ -4,21 +4,7 @@
 ; Inspect the Master IDE controller at io address 80.
 ; Report sector and cylinder counts.
 
-HDD_DATA    equ      80h
-HDD_FEAT    equ      81h
-HDD_ERROR   equ      81h
-HDD_SEC_CNT equ      82h
-HDD_SEC     equ      83h
-HDD_CYL_LO  equ      84h
-HDD_CYL_HI  equ      85h
-HDD_SDH     equ      86h
-HDD_CMD     equ      87h
-HDD_STATUS  equ      87h
-
-CMD_IDENT   equ      $EC
-CMD_FEAT    equ      $EF
-
-FEAT_8BIT   equ      $01
+#INCLUDE "diskport.asm"
 
 WARMBOOT    equ      0
 
@@ -27,6 +13,13 @@ WARMBOOT    equ      0
 START:  
         LD    DE, BANNER
 		CALL  PRINTMSG
+        LD    DE, PORTMSG
+        CALL  PRINTMSG
+        LD    A, BASE_PORT
+        CALL  PRINTHEXBYTE
+        LD    DE, CRLF
+        CALL  PRINTMSG
+
 
         XOR   A
 		OUT   (HDD_SEC), A
@@ -49,7 +42,8 @@ BUSWT1: IN    A, (HDD_STATUS)
 		JP    M, BUSWT1                 ; Loop while busy bit set		
 
         LD    HL, IDENT     ; Destination address
-		LD    BC, $0080     ; Read 256 bytes at a time from port 80	
+		LD    B, 0
+		LD    C, HDD_DATA   ; Read 256 bytes at a time from port 80	
 
 		LD    A, CMD_IDENT
 		OUT   (HDD_CMD), A
@@ -126,6 +120,7 @@ PRINTHEXNIB:
 		RET
 
 BANNER:     dm "IDE Disk Identifier. Scott M Baker.", $0D, $0A, "$"
+PORTMSG:    dm "Looking for IDE on port $"
 NODISKMSG:  dm "No Disk.", $0D, $0A, "$"
 DONEMSG:    dm "Done.", $0D, $0A, "$"
 CYLMSG:     dm "Cylinders: $"

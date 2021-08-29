@@ -8,17 +8,7 @@
 ;
 ; Then we check the disk busy and ready bits.
 
-HDD_DATA    equ      80h
-HDD_ERROR   equ      81h
-HDD_SEC_CNT equ      82h
-HDD_SEC     equ      83h
-HDD_CYL_LO  equ      84h
-HDD_CYL_HI  equ      85h
-HDD_SDH     equ      86h
-HDD_CMD     equ      87h
-HDD_STATUS  equ      87h
-
-CMD_IDENT   equ      $EC
+#INCLUDE "diskport.asm"
 
 WARMBOOT    equ      0
 
@@ -27,25 +17,31 @@ WARMBOOT    equ      0
 START:  
         LD    DE, BANNER
 		CALL  PRINTMSG
+        LD    DE, PORTMSG
+        CALL  PRINTMSG
+        LD    A, BASE_PORT
+        CALL  PRINTHEXBYTE
+        LD    DE, CRLF
+        CALL  PRINTMSG
 
 NEW:
        ; New code, the same as what I patched into the BIOS.
        ld     a,$A0
-       out    ($86),a        ; Set SDH to Master, Head0
+       out    (HDD_SDH),a    ; Set SDH to Master, Head0
        ld     b,a            ; b = $A0
 
-       ld     a, $01       
-       out    ($81), a      ; 8-bit mode
+       ld     a, $01 
+       out    (HDD_FEAT), a  ; 8-bit mode
 
-       in     a,($86)        ; Read back the SDH register
+       in     a,(HDD_SDH)    ; Read back the SDH register
        cp     b              ; Did it change?
 	   jp     nz, BADREG
 
-       ld     A, $EF        ; Set feature command for 8-bit mode
-       out    ($87), a      ; execute
+       ld     A, $EF         ; Set feature command for 8-bit mode
+       out    (HDD_CMD), a   ; execute
 
 BUSWT:
-       in     a,($87)        ; Read Status
+       in     a,(HDD_STATUS) ; Read Status
        bit    7, A
        jr     nz,BUSWT       ; Busy?
        bit    6, A
@@ -100,11 +96,41 @@ PRINTMSG:
 		CALL  $0005
 		RET
 
+PRINTHEXDE:
+        LD    A, D
+		CALL  PRINTHEXBYTE
+		LD    A, E
+		CALL  PRINTHEXBYTE
+		RET
+
+PRINTHEXBYTE:
+        PUSH  AF
+		RRA
+		RRA
+		RRA
+		RRA
+		CALL  PRINTHEXNIB
+		POP   AF
+PRINTHEXNIB:
+        PUSH  DE
+        AND   $0F
+		ADD   A, $90
+		DAA
+		ADC   A, $40
+		DAA
+		LD    C, $02
+		LD    E, A
+		CALL  $0005
+		POP   DE
+		RET
+
 BANNER:     dm "IDE Disk Presence Detector. Scott M Baker.", $0D, $0A, "$"
+PORTMSG:    dm "Looking for IDE on port $"
 BADREGMSG:  dm "No Controller.", $0D, $0A, "$"
 BUSYMSG:    dm "Busy.", $0D, $0A, "$"
 NOTREADYMSG: dm "Not Ready.", $0D, $0A, "$"
 DONEMSG:    dm "Done.", $0D, $0A, "$"
+CRLF:       dm $0D, $0A, "$"
 
 
 

@@ -1,22 +1,7 @@
 ; fmt0.asm
 ; Scott Baker, https://www.smbaker.com/
 
-
-HDD_DATA    equ      80h
-HDD_FEAT    equ      81h
-HDD_ERROR   equ      81h
-HDD_SEC_CNT equ      82h
-HDD_SEC     equ      83h
-HDD_CYL_LO  equ      84h
-HDD_CYL_HI  equ      85h
-HDD_SDH     equ      86h
-HDD_CMD     equ      87h
-HDD_STATUS  equ      87h
-
-CMD_IDENT   equ      $EC
-CMD_FEAT    equ      $EF
-
-FEAT_8BIT   equ      $01
+#INCLUDE "diskport.asm"
 
 WARMBOOT    equ      0
 
@@ -53,12 +38,9 @@ BUSWT2:  IN    A, (HDD_STATUS)
         OR    A
 		JP    M, BUSWT2      ; Loop while busy bit set		
 
-;DRQWT:  IN    A, (HDD_STATUS)
-;		BIT   3, A                     ; Is DRQ unset
-;		JP    Z,  DRQWT
-
         LD    HL, READBUF   ; Dest address
-		LD    BC, $0080     ; Read 256 bytes at a time from port 80	
+		LD    B, 0
+		LD    C, HDD_DATA   ; Read 256 bytes at a time from port 80			
 		INIR
 		INIR
 

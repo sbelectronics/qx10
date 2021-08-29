@@ -1,9 +1,10 @@
 ZASM=../../rc2014/z80-asm/zasm-4.0/Linux/zasm
 IDE_IMG=qx10ide.img
+PORT=0xD0
 
 all: programs patches disk copyout
 
-programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com cqgtest.com
+programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com cqgtest.com memtest.com memtest2.com
 
 patches: patch-hdpart patch-cpm2
 
@@ -23,7 +24,13 @@ fmt0.com: fmt0.asm
 	$(ZASM) -u -b fmt0.asm -o fmt0.com
 
 read0.com: read0.asm
-	$(ZASM) -u -b read0.asm -o read0.com	
+	$(ZASM) -u -b read0.asm -o read0.com
+
+memtest.com: memtest.asm
+	$(ZASM) -u -b memtest.asm -o memtest.com
+
+memtest2.com: memtest2.asm
+	$(ZASM) -u -b memtest2.asm -o memtest2.com
 
 patch-hdpart-2C61.bin: patch-hdpart-2C61.asm
 	$(ZASM) -u -b patch-hdpart-2C61.asm -o patch-hdpart-2C61.bin
@@ -57,17 +64,14 @@ patch-ret.bin: patch-ret.asm
 
 patch-hdpart: patch-hdpart-2C61.bin patch-hdpart-2c73.bin patch-hdpart-2cbb.bin patch-hdpart-2cfa.bin patch-hdpart-3151.bin patch-hdpart-30d7.bin patch-warmboot.bin patch-ret.bin patch-hdpart-30f9.bin patch-hdpart-3119.bin
 	cp ../disasm/hdpart.com .
-	#dd if=patch-hdpart-2C61.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x2C61-0x100)))   # nop out call to format
+	python ./portpatch.py hdpart $(PORT) hdpart.com
 	dd if=patch-hdpart-2c73.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x2C73-0x100)))    # seek, sector number
 	dd if=patch-hdpart-2cbb.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x2CBB-0x100)))    # seek, sector number
 	dd if=patch-hdpart-2cfa.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x2CFA-0x100)))    # seek, sector count
 	dd if=patch-hdpart-30d7.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x30d7-0x100)))    # read, repl wait busy with drq
-	#dd if=patch-warmboot.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x2C84-0x100)))   # format
-	#dd if=patch-warmboot.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x2ca7-0x100)))   # write
-	#dd if=patch-warmboot.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x30f9-0x100)))   # write
 	dd if=patch-hdpart-30f9.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x30f9-0x100)))  # write, add drqwt
-	#dd if=patch-hdpart-3151.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x3151-0x100)))  # seek, sector number and count
 	dd if=patch-hdpart-3119.bin of=hdpart.com conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x3119-0x100)))  # seek, secnum, count, and 8-bit mode
+	python ./portpatch.py hdpart_patches $(PORT) hdpart.com
 
 diff-hdpart:
 	hexdump -C ../disasm/hdpart.com > /tmp/hdpart1
@@ -91,9 +95,10 @@ patch-diskbios-9a14.bin: patch-diskbios-9a14.asm
 patch-cpm2: patch-diskbios-9a5f.bin patch-diskbios-9a9d.bin patch-diskbios-9a14.bin
 	# B19A == 9A9A
 	cp ../disasm/cpm2.sys .
+	python ./portpatch.py diskbios $(PORT) cpm2.sys
 	dd if=patch-diskbios-9a14.bin of=cpm2.sys conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x9a14+5888)))   # write, add drqwt
 	dd if=patch-diskbios-9a5f.bin of=cpm2.sys conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x9a5f+5888)))    # seek, secnum, count, and 8-bit mode
-	#dd if=patch-diskbios-9a9d.bin of=cpm2.sys conv=notrunc bs=1 seek=$(shell printf "%d" $$((0x9a9d+5888)))   # seek, sector number and count
+	python ./portpatch.py diskbios_patches $(PORT) cpm2.sys
 
 diff-cpm2:
 	hexdump -C ../disasm/cpm2.sys > /tmp/cpm2-1
@@ -115,6 +120,8 @@ disk:
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:BANK01.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:DISKINFO.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:DISKPRES.COM || true
+	cpmrm -f epsqx10 epsnqx10-mangled.img 0:MEMTEST.COM || true
+	cpmrm -f epsqx10 epsnqx10-mangled.img 0:MEMTEST2.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:READ0.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:ODYSSEY.TXT || true
 	cpmcp -f epsqx10 epsnqx10-mangled.img bank01.com 0:BANK01.COM
@@ -122,6 +129,8 @@ disk:
 	cpmcp -f epsqx10 epsnqx10-mangled.img cqgtest.com 0:CQGTEST.COM	
 	cpmcp -f epsqx10 epsnqx10-mangled.img diskinfo.com 0:DISKINFO.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img diskpres.com 0:DISKPRES.COM
+	cpmcp -f epsqx10 epsnqx10-mangled.img memtest.com 0:MEMTEST.COM
+	cpmcp -f epsqx10 epsnqx10-mangled.img memtest2.com 0:MEMTEST2.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img fmt0.com 0:FMT0.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img cpm2.sys 0:CPM2.SYS
 	cpmcp -f epsqx10 epsnqx10-mangled.img hdpart.com 0:HDPART.COM
