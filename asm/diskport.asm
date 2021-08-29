@@ -1,9 +1,9 @@
-# IDE IO Port Definitions
-# Scott Baker, http://www.smbaker.com/
+; IDE IO Port Definitions
+; Scott Baker, http://www.smbaker.com/
 
-# Base port for the QX-10's Comrex Comfiler is $80. Choose something else,
-# as stock CP/M boot images will hang on the ide if they detect it at
-# 0x80.
+; Base port for the QX-10's Comrex Comfiler is $80. Choose something else,
+; as stock CP/M boot images will hang on the ide if they detect it at
+; 0x80.
 
 BASE_PORT   equ      0D0h
 
