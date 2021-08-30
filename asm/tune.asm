@@ -39,6 +39,7 @@
 ;   2019-11-21 [WBW] Added table-driven configuration
 ;   2020-02-11 [WBW] Made hardware config & detection more flexible
 ;   2020-03-29 [WBW] Fix error in Z180 I/O W/S bracketing
+;   2021-08-29 [smbaker] Hacked into QX-10 version
 ;_______________________________________________________________________________
 ;
 ; ToDo:
@@ -52,13 +53,13 @@
 RESTART		.EQU	$0000		; CP/M restart vector
 BDOS		.EQU	$0005		; BDOS invocation vector
 ;	
-IDENT		.EQU	$FFFE		; loc of RomWBW HBIOS ident ptr
+;IDENT		.EQU	$FFFE		; loc of RomWBW HBIOS ident ptr
 ;	
 RMJ		.EQU	3		; intended CBIOS version - major
 RMN		.EQU	0		; intended CBIOS version - minor
 ;
-BF_SYSVER	.EQU	$F1		; BIOS: VER function
-BF_SYSGET	.EQU	$F8		; HBIOS: SYSGET function
+;BF_SYSVER	.EQU	$F1		; BIOS: VER function
+;BF_SYSGET	.EQU	$F8		; HBIOS: SYSGET function
 ;
 FCB		.EQU	$5C		; Location of default FCB
 ;
@@ -68,6 +69,7 @@ TYPPT2		.EQU	1		; FILTYP value for PT2 sound file
 TYPPT3		.EQU	2		; FILTYP value for PT3 sound file
 TYPMYM		.EQU	3		; FILTYP value for MYM sound file
 
+; ZASM can't evaluate these inline...
 CONST1      .EQU    (e_-SamCnv-2)*256+$18
 CONST2      .EQU    ($F8*2) & $FF
 CONST3      .EQU    (2*FRAG)+uncomp
@@ -84,13 +86,15 @@ CONST6      .EQU    (3*FRAG)-1
 	CALL	PRTSTR			; Print message
 ;		
 	; Check BIOS and version	
-	CALL	IDBIO			; Identify hardware BIOS
-	CP	1			; RomWBW HBIOS?
-	JP	NZ,ERRBIO		; If not, handle BIOS error
-	LD	A,RMJ << 4 | RMN	; Expected HBIOS ver
-	CP	D			; Compare with result above
-	JP	NZ,ERRBIO		; Handle BIOS error
-	LD	A,L			; Platform id to A
+	;CALL	IDBIO			; Identify hardware BIOS
+	;CP	1			; RomWBW HBIOS?
+	;JP	NZ,ERRBIO		; If not, handle BIOS error
+	;LD	A,RMJ << 4 | RMN	; Expected HBIOS ver
+	;CP	D			; Compare with result above
+	;JP	NZ,ERRBIO		; Handle BIOS error
+	;LD	A,L			; Platform id to A
+
+	LD  A, $0B          ; Select QX-10 Platform
 	LD	(CURPLT),A		; Save as current platform id
 ;
 	LD	HL,CFGTBL		; Point to start of config table
@@ -145,26 +149,32 @@ MAT:
 	CALL	PRTSTR			; Print description
 ;
 	; Test for timer running to determine if it can be used for delay
-	LD	B,BF_SYSGET		; HBIOS: GET function
-	LD	C,$D0			; TIMER subfunction
-	RST	08			; DE:HL := current tick count
-	LD	A,L			; DE:HL == 0?
-	OR	H	
-	OR	E	
-	OR	D	
-	LD	A,0			; Assume no timer
-	LD	DE,MSGDLY		; Delay mode msg
-	JR	Z,SETDLY		; If tick count is zero, no timer active
-	LD	A,$FF			; Value for timer active
-	LD	DE,MSGTIM		; Timer mode msg
+	;LD	B,BF_SYSGET		; HBIOS: GET function
+	;LD	C,$D0			; TIMER subfunction
+	;RST	08			; DE:HL := current tick count
+	;LD	A,L			; DE:HL == 0?
+	;OR	H	
+	;OR	E	
+	;OR	D	
+	;LD	A,0			; Assume no timer
+	;LD	DE,MSGDLY		; Delay mode msg
+	;JR	Z,SETDLY		; If tick count is zero, no timer active
+	;LD	A,$FF			; Value for timer active
+	;LD	DE,MSGTIM		; Timer mode msg
+
+	LD  A, 0
+	LD  DE, MSGDLY      ; Force delay mode
 SETDLY:	
 	LD	(WMOD),A		; Save wait mode
 	CALL	PRTSTR			; Print it
 ;
 	; Get CPU speed & type from RomWBW HBIOS and compute quark delay factor
-	LD	B,$F8			; HBIOS SYSGET function 0xF8
-	LD	C,$F0			; CPUINFO subfunction 0xF0
-	RST	08			; Do it, DE := CPU speed in KHz
+	;LD	B,$F8			; HBIOS SYSGET function 0xF8
+	;LD	C,$F0			; CPUINFO subfunction 0xF0
+	;RST	08			; Do it, DE := CPU speed in KHz
+
+    LD  DE, $0FA0       ; 4000 KHz
+
 	SRL	D			; Divide by 2
 	RR	E			; ... for delay factor
 	EX	DE,HL			; Move result to HL
@@ -382,51 +392,51 @@ GETKEY	LD	C,6		; BDOS direct I/O
 ;
 ; Identify active BIOS.  RomWBW HBIOS=1, UNA UBIOS=2, else 0
 ;
-IDBIO:
+;IDBIO:
 ;
-	; Check for UNA (UBIOS)
-	LD	A,($FFFD)	; fixed location of UNA API vector
-	CP	$C3		; jp instruction?
-	JR	NZ,IDBIO1	; if not, not UNA
-	LD	HL,($FFFE)	; get jp address
-	LD	A,(HL)		; get byte at target address
-	CP	$FD		; first byte of UNA push ix instruction
-	JR	NZ,IDBIO1	; if not, not UNA
-	INC	HL		; point to next byte
-	LD	A,(HL)		; get next byte
-	CP	$E5		; second byte of UNA push ix instruction
-	JR	NZ,IDBIO1	; if not, not UNA, check others
+;	; Check for UNA (UBIOS)
+;	LD	A,($FFFD)	; fixed location of UNA API vector
+;	CP	$C3		; jp instruction?
+;	JR	NZ,IDBIO1	; if not, not UNA
+;	LD	HL,($FFFE)	; get jp address
+;	LD	A,(HL)		; get byte at target address
+;	CP	$FD		; first byte of UNA push ix instruction
+;	JR	NZ,IDBIO1	; if not, not UNA
+;	INC	HL		; point to next byte
+;	LD	A,(HL)		; get next byte
+;	CP	$E5		; second byte of UNA push ix instruction
+;	JR	NZ,IDBIO1	; if not, not UNA, check others
+;;
+;	LD	BC,$04FA	; UNA: get BIOS date and version
+;	RST	08		; DE := ver, HL := date
+;;
+;	LD	A,2		; UNA BIOS id = 2
+;	RET			; and done
 ;
-	LD	BC,$04FA	; UNA: get BIOS date and version
-	RST	08		; DE := ver, HL := date
-;
-	LD	A,2		; UNA BIOS id = 2
-	RET			; and done
-;
-IDBIO1:
-	; Check for RomWBW (HBIOS)
-	LD	HL,($FFFE)	; HL := HBIOS ident location
-	LD	A,'W'		; First byte of ident
-	CP	(HL)		; Compare
-	JR	NZ,IDBIO2	; Not HBIOS
-	INC	HL		; Next byte of ident
-	LD	A,~'W'		; Second byte of ident
-	CP	(HL)		; Compare
-	JR	NZ,IDBIO2	; Not HBIOS
-;
-	LD	B,BF_SYSVER	; HBIOS: VER function
-	LD	C,0		; required reserved value
-	RST	08		; DE := version, L := platform id
-;	
-	LD	A,1		; HBIOS BIOS id = 1
-	RET			; and done
-;
-IDBIO2:
-	; No idea what this is
-	XOR	A		; Setup return value of 0
-	RET			; and done
-;
-;
+;IDBIO1:
+;	; Check for RomWBW (HBIOS)
+;	LD	HL,($FFFE)	; HL := HBIOS ident location
+;	LD	A,'W'		; First byte of ident
+;	CP	(HL)		; Compare
+;	JR	NZ,IDBIO2	; Not HBIOS
+;	INC	HL		; Next byte of ident
+;	LD	A,~'W'		; Second byte of ident
+;	CP	(HL)		; Compare
+;	JR	NZ,IDBIO2	; Not HBIOS
+;;
+;	LD	B,BF_SYSVER	; HBIOS: VER function
+;	LD	C,0		; required reserved value
+;	RST	08		; DE := version, L := platform id
+;;	
+;	LD	A,1		; HBIOS BIOS id = 1
+;	RET			; and done
+;;
+;IDBIO2:
+;	; No idea what this is
+;	XOR	A		; Setup return value of 0
+;	RET			; and done
+;;
+;;
 ;
 SLOWCPU:
 	LD A,(Z180)	; Z180 base I/O port
@@ -751,6 +761,9 @@ CFGTBL:	;	PLT	RSEL	RDAT	RIN	Z180	ACR
 	.DB	$0A,	$61,	$60,	$60,	$C0,	$FF	; SCZ180 W/ RC SOUND MODULE (MF)
 	.DW	HWSTR_RCMF
 ;
+	.DB	$0B,	$A0,	$A1,	$A2,	$FF,	$FF	; Epson QX-10
+	.DW	HWSTR_QX10
+;
 	.DB	$FF					; END OF TABLE MARKER
 ;
 CFG:		; ACTIVE CONFIG VALUES (FROM SELECTED CFGTBL ENTRY)
@@ -797,6 +810,7 @@ HWSTR_SCG	.DB	"SCG ECB Board",0
 HWSTR_N8	.DB	"N8 Onboard Sound",0
 HWSTR_RCEB	.DB	"RC2014 Sound Module (EB)",0
 HWSTR_RCMF	.DB	"RC2014 Sound Module (MF)",0
+HWSTR_QX10  .DB "Epson QX-10 Sound Board", 0
 ;
 ;===============================================================================
 ; PTx Player Routines

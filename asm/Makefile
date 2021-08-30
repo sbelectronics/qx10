@@ -4,7 +4,7 @@ PORT=0xD0
 
 all: programs patches disk copyout
 
-programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com cqgtest.com memtest.com memtest2.com tune.com
+programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com cqgtest.com memtest.com memtest2.com tune.com sndpres.com
 
 patches: patch-hdpart patch-cpm2
 
@@ -34,6 +34,9 @@ memtest2.com: memtest2.asm
 
 tune.com: tune.asm
 	$(ZASM) -u -b tune.asm -o tune.com
+
+sndpres.com: sndpres.asm
+	$(ZASM) -u -b sndpres.asm -o sndpres.com
 
 patch-hdpart-2C61.bin: patch-hdpart-2C61.asm
 	$(ZASM) -u -b patch-hdpart-2C61.asm -o patch-hdpart-2C61.bin
@@ -126,7 +129,6 @@ disk:
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:MEMTEST.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:MEMTEST2.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:READ0.COM || true
-	cpmrm -f epsqx10 epsnqx10-mangled.img 0:TUNE.COM || true	
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:ODYSSEY.TXT || true
 	cpmcp -f epsqx10 epsnqx10-mangled.img bank01.com 0:BANK01.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img ../disasm/CLRDIR.COM 0:CLRDIR.COM
@@ -139,7 +141,6 @@ disk:
 	cpmcp -f epsqx10 epsnqx10-mangled.img cpm2.sys 0:CPM2.SYS
 	cpmcp -f epsqx10 epsnqx10-mangled.img hdpart.com 0:HDPART.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img read0.com 0:READ0.COM
-	cpmcp -f epsqx10 epsnqx10-mangled.img tune.com 0:TUNE.COM	
 	cpmcp -f epsqx10 epsnqx10-mangled.img odyssey.txt 0:ODYSSEY.TXT
 	dd if=epsnqx10.img of=build.img bs=1 count=16384
 	dd if=epsnqx10-mangled.img of=build.img bs=1 skip=20480 conv=notrunc oflag=append
