@@ -32,7 +32,7 @@ BUSWT1: IN    A, (HDD_STATUS)
 		JP    M, BUSWT1                 ; Loop while busy bit set		
 
 		LD    A, $50
-		OUT   ($87), A
+		OUT   (HDD_CMD), A
 
         LD    HL, FMTBUF    ; Source address
 		LD    B, 0

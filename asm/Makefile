@@ -4,7 +4,7 @@ PORT=0xD0
 
 all: programs patches disk copyout
 
-programs: bank01.com diskinfo.com diskpres.com fmt0.com read0.com cqgtest.com memtest.com memtest2.com tune.com sndpres.com
+programs: bank01.com diskinfo.com diskpres.com disktest.com fmt0.com read0.com cqgtest.com memtest.com memtest2.com tune.com sndpres.com
 
 patches: patch-hdpart patch-cpm2
 
@@ -16,6 +16,9 @@ diskinfo.com: diskinfo.asm
 
 diskpres.com: diskpres.asm
 	$(ZASM) -u -b diskpres.asm -o diskpres.com
+
+disktest.com: disktest.asm
+	$(ZASM) -u -b disktest.asm -o disktest.com
 
 bank01.com: bank01.asm
 	$(ZASM) -u -b bank01.asm -o bank01.com
@@ -126,6 +129,7 @@ disk:
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:BANK01.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:DISKINFO.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:DISKPRES.COM || true
+	cpmrm -f epsqx10 epsnqx10-mangled.img 0:DISKTEST.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:MEMTEST.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:MEMTEST2.COM || true
 	cpmrm -f epsqx10 epsnqx10-mangled.img 0:READ0.COM || true
@@ -135,6 +139,7 @@ disk:
 	cpmcp -f epsqx10 epsnqx10-mangled.img cqgtest.com 0:CQGTEST.COM	
 	cpmcp -f epsqx10 epsnqx10-mangled.img diskinfo.com 0:DISKINFO.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img diskpres.com 0:DISKPRES.COM
+	cpmcp -f epsqx10 epsnqx10-mangled.img disktest.com 0:DISKTEST.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img memtest.com 0:MEMTEST.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img memtest2.com 0:MEMTEST2.COM
 	cpmcp -f epsqx10 epsnqx10-mangled.img fmt0.com 0:FMT0.COM
