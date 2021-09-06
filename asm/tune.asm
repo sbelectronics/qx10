@@ -761,8 +761,10 @@ CFGTBL:	;	PLT	RSEL	RDAT	RIN	Z180	ACR
 	.DB	$0A,	$61,	$60,	$60,	$C0,	$FF	; SCZ180 W/ RC SOUND MODULE (MF)
 	.DW	HWSTR_RCMF
 ;
-	.DB	$0B,	$A0,	$A1,	$A2,	$FF,	$FF	; Epson QX-10
+	.DB	$0B,	$D8,	$D9,	$DA,	$FF,	$FF	; Scott's QX-10 sound board
 	.DW	HWSTR_QX10
+	.DB	$0B,	$A0,	$A1,	$A2,	$FF,	$FF	; MSX
+	.DW	HWSTR_QX10_MSX
 ;
 	.DB	$FF					; END OF TABLE MARKER
 ;
@@ -811,6 +813,7 @@ HWSTR_N8	.DB	"N8 Onboard Sound",0
 HWSTR_RCEB	.DB	"RC2014 Sound Module (EB)",0
 HWSTR_RCMF	.DB	"RC2014 Sound Module (MF)",0
 HWSTR_QX10  .DB "Epson QX-10 Sound Board", 0
+HWSTR_QX10_MSX  .DB "Epson QX-10 Sound Board with MSX addr", 0
 ;
 ;===============================================================================
 ; PTx Player Routines

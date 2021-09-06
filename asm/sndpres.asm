@@ -12,7 +12,7 @@
 
 WARMBOOT    equ      0
 
-SND_BASE    equ      $A0
+SND_BASE    equ      $D8
 SND_SEL     equ      SND_BASE
 SND_WDAT    equ      SND_BASE+1
 SND_RDAT    equ      SND_BASE+2

@@ -56,7 +56,7 @@ tools:
 	dd if=$(TOOLS_BUILD_IMG) of=$(TOOLS_IMG) bs=1 skip=20480 conv=notrunc oflag=append
 
 sound:
-	cd ../asm && make tune.com
+	cd ../asm && make tune.com sndpres.com
 	cp $(BASE_IMG) $(SOUND_BUILD_IMG)
 	cpmcp -f epsqx10 $(SOUND_BUILD_IMG) $(TUNE_SRC) 0:TUNE.COM
 	cpmcp -f epsqx10 $(SOUND_BUILD_IMG) $(SNDPRES_SRC) 0:SNDPRES.COM	
