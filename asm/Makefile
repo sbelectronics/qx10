@@ -153,6 +153,7 @@ disk:
 
 copyout:
 	cp $(IDE_IMG) ../flashflop/DSKA0031-DEVEL.img
+	cp $(IDE_IMG) ../images/
 
 odyssey.txt:
 	fold -w 40 -s odyssey.orig > odyssey.fold

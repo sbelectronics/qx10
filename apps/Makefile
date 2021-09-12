@@ -143,4 +143,9 @@ copyout:
 	cp $(TPAS301_IMG) ../flashflop/DSKA0026-TPAS301.img
 	cp $(SOUND_IMG) ../flashflop/DSKA0027-SOUND.img
 	cp $(SPEECH_IMG) ../flashflop/DSKA0028-SPEECH.img
+	cp $(ZORK_IMG) ../images/
+	cp $(TOOLS_IMG) ../images/
+	cp $(TPAS301_IMG) ../images/
+	cp $(SOUND_IMG) ../images/
+	cp $(SPEECH_IMG) ../images/
 
