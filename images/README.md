@@ -12,3 +12,11 @@ FlashFloppy, then I suggest using the custom IMG.CFG file in the
 * QX10IDE - Patched CPM for use with IDE Board
 * QX10SOUND - AY-3-8910 Sound Board, Tune Player
 * QX10SPEECH - SP0256 speech board
+
+FORMAT: The format of any IMG files in this directory is generally 16 sectors
+of 256 bytes per sector for the first two tracks (on each side), then 10
+sectors of 512 bytes each for the remaining tracks. This is a way Epson did
+it for the CP/M B release, presumably to maximize disk space while still
+being compatible with the bootloader. It does present some challenges when
+writing images. A Gotek running Flashfloppy makes for a more convenient
+QX-10 than using the SD-321 physical drive.
